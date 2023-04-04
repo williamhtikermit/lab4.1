@@ -1,0 +1,80 @@
+name: Lab 4 CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      #Checkout repo
+      - uses: actions/checkout@v3
+
+      #Install node
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      
+      #Install npm deps
+      - name: Install dependencies
+        run: npm clean-install
+      
+      #Run our linter
+      - name: Run linter
+        run: npm run lint
+
+  lint2:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      #Checkout repo
+      - uses: actions/checkout@v3
+
+      #Install node
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      
+      #Install npm deps
+      - name: Install dependencies
+        run: npm clean-install
+      
+      #Run our linter
+      - name: Run linter
+        run: npm run lint      
+
+  unit-test:
+    needs: 
+      - lint
+      - lint2
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      #Install node
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      #INSTALL NPM DEPS
+      - name: Install dependencies
+        run: npm clean-install
+      
+      #RUN UNIT TESTS
+      - name: Run unit tests
+        run: npm run test-unit
+
+      #Upload test results
+      - if: success() || failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-${{ github.sha }}
+          path: reports/report.xml
